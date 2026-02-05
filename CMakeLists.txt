@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Main executable (update as files are added)
 add_executable(layout_engine
     src/main.cpp
+    src/core/EdgeValues.cpp
 )
 
 target_include_directories(layout_engine PRIVATE src)
@@ -22,6 +23,8 @@ FetchContent_MakeAvailable(googletest)
 # Test executable (update as test files are added)
 add_executable(layout_tests
     # Add test files as created
+    tests/test_edge_values.cpp
+    src/core/EdgeValues.cpp  # Need to link implementation for tests
 )
 
 target_link_libraries(layout_tests gtest_main)
