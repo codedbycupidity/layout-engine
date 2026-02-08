@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(layout_engine
     src/main.cpp
     src/core/EdgeValues.cpp
+    src/core/LayoutNode.cpp
 )
 
 target_include_directories(layout_engine PRIVATE src)
@@ -24,7 +25,9 @@ FetchContent_MakeAvailable(googletest)
 add_executable(layout_tests
     # Add test files as created
     tests/test_edge_values.cpp
-    src/core/EdgeValues.cpp  # Need to link implementation for tests
+    tests/tests_layout_node.cpp
+    src/core/EdgeValues.cpp  
+    src/core/LayoutNode.cpp
 )
 
 target_link_libraries(layout_tests gtest_main)
