@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/layout/LayoutConstraints.h"
+#include "layout/LayoutConstraints.h"
 
 TEST(LayoutConstraintsTest, DefaultConstruction){
     LayoutConstraints constraints (800.0f, 600.0f);
