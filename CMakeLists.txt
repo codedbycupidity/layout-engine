@@ -11,6 +11,7 @@ add_executable(layout_engine
     src/core/LayoutNode.cpp
     src/layout/BlockLayout.cpp
     src/layout/FlexLayout.cpp
+    src/layout/LayoutEngine.cpp
 )
 
 target_include_directories(layout_engine PRIVATE src)
@@ -31,10 +32,12 @@ add_executable(layout_tests
     tests/test_layout_constraints.cpp
     tests/test_block_layout.cpp
     tests/test_flex_layout.cpp
+    tests/test_layout_engine.cpp
     src/core/EdgeValues.cpp
     src/core/LayoutNode.cpp
     src/layout/BlockLayout.cpp
     src/layout/FlexLayout.cpp
+    src/layout/LayoutEngine.cpp
 )
 
 target_link_libraries(layout_tests gtest_main)
