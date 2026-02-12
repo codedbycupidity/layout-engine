@@ -1,4 +1,5 @@
 #include "layout/BlockLayout.h"
+#include "layout/FlexLayout.h"
 #include <algorithm>
 
 namespace BlockLayout
@@ -54,17 +55,21 @@ namespace BlockLayout
                 true,
                 is_height_definite);
 
-            // Recursively layout child (only block children for now)
+            // Recursively layout child based on its display type
             if (child.getDisplay() == Display::Block)
             {
                 BlockLayout::layout(child, child_constraints);
+            }
+            else if (child.getDisplay() == Display::Flex)
+            {
+                FlexLayout::layout(child, child_constraints);
             }
 
             // Calculate child's X position
             float child_x = node.getPadding().left() + node.getBorder().left() + child.getMargin().left();
 
             // Calculate child's Y position
-            float child_y = y_offset + child.getMargin().top();
+            float child_y = node.getPadding().top() + node.getBorder().top() + y_offset + child.getMargin().top();
 
             // Set child's computed position
             child.setComputedPosition(child_x, child_y);
