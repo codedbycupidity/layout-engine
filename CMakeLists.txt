@@ -13,6 +13,7 @@ add_executable(layout_engine
     src/layout/FlexLayout.cpp
     src/layout/LayoutEngine.cpp
     src/parser/LayoutParser.cpp
+    src/output/OutputFormatter.cpp
 )
 
 target_include_directories(layout_engine PRIVATE src)
@@ -35,12 +36,15 @@ add_executable(layout_tests
     tests/test_flex_layout.cpp
     tests/test_layout_engine.cpp
     tests/test_parser.cpp
+    tests/test_output_formatter.cpp
     src/core/EdgeValues.cpp
     src/core/LayoutNode.cpp
     src/layout/BlockLayout.cpp
     src/layout/FlexLayout.cpp
     src/layout/LayoutEngine.cpp
     src/parser/LayoutParser.cpp
+    src/output/OutputFormatter.cpp
+
 )
 
 target_link_libraries(layout_tests gtest_main)
