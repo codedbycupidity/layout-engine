@@ -1,0 +1,23 @@
+container {
+    display: block;
+    width: 800;
+    height: 600;
+
+    header {
+        display: block;
+        width: 800;
+        height: 100;
+    }
+
+    content {
+        display: block;
+        width: 800;
+        height: 450;
+    }
+
+    footer {
+        display: block;
+        width: 800;
+        height: 50;
+    }
+}

@@ -1,0 +1,19 @@
+container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 800;
+    height: 600;
+
+    sidebar {
+        display: block;
+        width: 200;
+        height: 600;
+    }
+
+    main {
+        display: block;
+        width: 580;
+        height: 600;
+    }
+}

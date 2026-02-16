@@ -221,3 +221,78 @@ make
 # Run engine
 ./layout_engine ../examples/simple_block.txt
 ```
+
+## Usage
+
+### Basic Usage
+
+```bash
+# Run with an input file (uses default 1024x768 viewport)
+./layout_engine examples/simple_block.txt
+
+# Specify custom viewport dimensions
+./layout_engine examples/simple_flex.txt --viewport 800 600
+
+# Output in JSON format
+./layout_engine examples/nested_layout.txt --json
+
+# Combine options
+./layout_engine examples/complex_example.txt --viewport 1280 800 --json
+```
+
+### Input File Format
+
+The engine uses a simplified CSS-like syntax:
+
+```
+container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 800;
+    height: 600;
+
+    child {
+        display: block;
+        width: 200;
+        height: 100;
+        margin: 10;
+        padding: 5;
+    }
+}
+```
+
+**Supported Properties:**
+- `display`: block | flex | none
+- `width`, `height`: numeric values
+- `margin`, `padding`, `border`: 1, 2, or 4 values (CSS shorthand)
+- `flex-direction`: row | column
+- `justify-content`: flex-start | center | flex-end | space-between
+- `align-items`: flex-start | center | flex-end | stretch
+
+### Example Output
+
+**Console Output:**
+```
+=== Layout Results ===
+Viewport: 1024x768
+
+page: x=0.0, y=0.0, w=1024.0, h=768.0
+  header: x=0.0, y=0.0, w=1024.0, h=80.0
+  content: x=0.0, y=80.0, w=1024.0, h=638.0
+    sidebar: x=0.0, y=0.0, w=250.0, h=638.0
+    main: x=250.0, y=0.0, w=774.0, h=638.0
+  footer: x=0.0, y=718.0, w=1024.0, h=50.0
+```
+
+**JSON Output:**
+```json
+{
+  "id": "page",
+  "x": 0.0,
+  "y": 0.0,
+  "width": 1024.0,
+  "height": 768.0,
+  "children": [...]
+}
+```
