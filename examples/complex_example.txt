@@ -1,0 +1,163 @@
+app {
+    display: flex;
+    flex-direction: column;
+    width: 1280;
+    height: 800;
+
+    topbar {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        height: 60;
+        padding: 0 20 0 20;
+        border: 1;
+
+        logo {
+            display: block;
+            width: 120;
+            height: 40;
+        }
+
+        search {
+            display: block;
+            width: 400;
+            height: 40;
+        }
+
+        user_menu {
+            display: flex;
+            flex-direction: row;
+
+            notifications {
+                display: block;
+                width: 40;
+                height: 40;
+                margin: 0 10 0 0;
+            }
+
+            avatar {
+                display: block;
+                width: 40;
+                height: 40;
+            }
+        }
+    }
+
+    main_container {
+        display: flex;
+        flex-direction: row;
+
+        left_sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 250;
+            padding: 20;
+            border: 1;
+
+            menu_item1 {
+                display: block;
+                height: 40;
+                margin: 0 0 10 0;
+            }
+
+            menu_item2 {
+                display: block;
+                height: 40;
+                margin: 0 0 10 0;
+            }
+
+            menu_item3 {
+                display: block;
+                height: 40;
+            }
+        }
+
+        content_area {
+            display: flex;
+            flex-direction: column;
+            padding: 20;
+
+            toolbar {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                height: 50;
+                margin: 0 0 20 0;
+
+                button1 {
+                    display: block;
+                    width: 100;
+                    height: 40;
+                    margin: 0 10 0 0;
+                }
+
+                button2 {
+                    display: block;
+                    width: 100;
+                    height: 40;
+                    margin: 0 10 0 0;
+                }
+
+                button3 {
+                    display: block;
+                    width: 100;
+                    height: 40;
+                }
+            }
+
+            content_grid {
+                display: flex;
+                flex-direction: row;
+
+                card1 {
+                    display: block;
+                    width: 300;
+                    height: 400;
+                    margin: 0 20 0 0;
+                    padding: 15;
+                    border: 1;
+                }
+
+                card2 {
+                    display: block;
+                    width: 300;
+                    height: 400;
+                    margin: 0 20 0 0;
+                    padding: 15;
+                    border: 1;
+                }
+
+                card3 {
+                    display: block;
+                    width: 300;
+                    height: 400;
+                    padding: 15;
+                    border: 1;
+                }
+            }
+        }
+
+        right_sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 200;
+            padding: 20;
+
+            widget1 {
+                display: block;
+                height: 150;
+                margin: 0 0 20 0;
+                padding: 10;
+                border: 1;
+            }
+
+            widget2 {
+                display: block;
+                height: 200;
+                padding: 10;
+                border: 1;
+            }
+        }
+    }
+}
