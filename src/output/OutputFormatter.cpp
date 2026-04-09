@@ -98,3 +98,46 @@ std::string OutputFormatter::formatFloat(float value, int precision)
     ss << std::fixed << std::setprecision(precision) << value;
     return ss.str();
 }
+
+std::string OutputFormatter::textLayoutToJSON(const TextLayoutResult &result,
+                                               float container_width,
+                                               const std::string &text,
+                                               const std::string &align,
+                                               const FontMetrics &metrics)
+{
+    std::ostringstream json;
+
+    json << "{\n";
+    json << "  \"text\": \"" << text << "\",\n";
+    json << "  \"align\": \"" << align << "\",\n";
+    json << "  \"container_width\": " << formatFloat(container_width) << ",\n";
+    json << "  \"char_width\": " << formatFloat(metrics.getCharWidth()) << ",\n";
+    json << "  \"line_height\": " << formatFloat(metrics.getLineHeight()) << ",\n";
+    json << "  \"letter_spacing\": " << formatFloat(metrics.getLetterSpacing()) << ",\n";
+    json << "  \"total_width\": " << formatFloat(result.total_width) << ",\n";
+    json << "  \"total_height\": " << formatFloat(result.total_height) << ",\n";
+    json << "  \"lines\": [\n";
+
+    for (size_t i = 0; i < result.lines.size(); ++i)
+    {
+        const auto &line = result.lines[i];
+        json << "    {\"words\": [";
+        for (size_t j = 0; j < line.words.size(); ++j)
+        {
+            json << "\"" << line.words[j] << "\"";
+            if (j < line.words.size() - 1) json << ", ";
+        }
+        json << "], ";
+        json << "\"width\": " << formatFloat(line.width) << ", ";
+        json << "\"x_offset\": " << formatFloat(line.x_offset) << ", ";
+        json << "\"y_position\": " << formatFloat(line.y_position) << ", ";
+        json << "\"word_spacing\": " << formatFloat(line.word_spacing) << ", ";
+        json << "\"is_justified\": " << (line.is_justified ? "true" : "false");
+        json << "}";
+        if (i < result.lines.size() - 1) json << ",";
+        json << "\n";
+    }
+
+    json << "  ]\n}";
+    return json.str();
+}

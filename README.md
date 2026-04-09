@@ -170,6 +170,9 @@ mini-layout-engine/
 │   ├── test_parser.cpp
 │   └── test_text_layout.cpp
 │
+├── visualizer/
+│   └── text_layout.html          # Browser-based text layout visualizer
+│
 └── examples/
     ├── simple_block.txt          # Test inputs
     ├── simple_flex.txt
@@ -212,6 +215,7 @@ Completing this project provides understanding of:
 | FlexLayout | FlexFormattingContext |
 | TextLayout | InlineFormattingContext / LineBreaker |
 | FontMetrics | FontCascade / SimpleFontData |
+| OutputFormatter | RenderTreeAsText (WebKit's layout dump tool) |
 | LayoutEngine | FrameView / LayoutContext |
 
 The concepts are the same; the scope is reduced.
@@ -241,7 +245,7 @@ make
 
 ## Usage
 
-### Basic Usage
+### Layout Mode
 
 ```bash
 # Run with an input file (uses default 1024x768 viewport)
@@ -255,6 +259,45 @@ make
 
 # Combine options
 ./layout_engine examples/complex_example.txt --viewport 1280 800 --json
+```
+
+### Text Layout Mode
+
+```bash
+# Basic text layout (outputs JSON)
+./layout_engine --text-layout "The quick brown fox jumps over the lazy dog"
+
+# Set container width and alignment
+./layout_engine --text-layout "Hello world" --width 200 --align center
+
+# Customize font metrics
+./layout_engine --text-layout "Some text" --width 300 --char-width 10 --line-height 24
+
+# All text layout options
+./layout_engine --text-layout "text" --width 200 --align justify --char-width 8 --line-height 20 --letter-spacing 1
+```
+
+**Text layout options:**
+- `--width <px>`: Container width (default: 200)
+- `--align <mode>`: left | center | right | justify (default: left)
+- `--char-width <px>`: Character width (default: 8)
+- `--line-height <px>`: Line height (default: 20)
+- `--letter-spacing <px>`: Letter spacing (default: 0)
+
+### Text Layout Visualizer
+
+A browser-based visualizer compares your C++ engine output side-by-side with native browser rendering.
+
+```bash
+# 1. Generate JSON from the engine
+cd build
+./layout_engine --text-layout "Your text here" --width 200 --align justify > ../visualizer/layout_data.json
+
+# 2. Serve the visualizer
+cd ../visualizer
+python3 -m http.server 8080
+
+# 3. Open http://localhost:8080/text_layout.html
 ```
 
 ### Input File Format
@@ -311,5 +354,23 @@ page: x=0.0, y=0.0, w=1024.0, h=768.0
   "width": 1024.0,
   "height": 768.0,
   "children": [...]
+}
+```
+
+**Text Layout JSON Output:**
+```json
+{
+  "text": "The quick brown fox jumps over the lazy dog.",
+  "align": "left",
+  "container_width": 200.0,
+  "char_width": 8.0,
+  "line_height": 20.0,
+  "letter_spacing": 0.0,
+  "total_width": 200.0,
+  "total_height": 60.0,
+  "lines": [
+    {"words": ["The", "quick", "brown", "fox", "jumps"], "width": 200.0, "x_offset": 0.0, "y_position": 0.0, "word_spacing": 8.0, "is_justified": false},
+    {"words": ["over", "the", "lazy", "dog."], "width": 152.0, "x_offset": 0.0, "y_position": 20.0, "word_spacing": 8.0, "is_justified": false}
+  ]
 }
 ```
