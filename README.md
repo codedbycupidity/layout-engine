@@ -8,10 +8,9 @@ This project implements a simplified layout engine in C++ that:
 - Parses a simplified layout description format (CSS-like properties)
 - Constructs a layout tree
 - Implements fundamental layout algorithms (Block layout + Flexbox basics)
+- Performs text layout with line breaking and alignment
 - Calculates positions and dimensions
 - Includes comprehensive testing
-
-This is NOT a toy project—it implements real layout algorithms following web standards, just with reduced scope.
 
 ## Relevance to WebKit
 
@@ -61,12 +60,18 @@ From WebKit's project goals, this demonstrates:
 - Flex item sizing
 - Justification and alignment basics
 
-### 4. Layout Engine
+### 4. Text Layout Engine
+- Word wrapping and line breaking algorithm
+- Text alignment (left, center, right, justify)
+- Simple font metrics (character width, line height, letter spacing)
+- Justified text with even word spacing distribution
+
+### 5. Layout Engine
 - Coordinates layout passes
 - Handles dependencies
 - Computes final positions
 
-### 5. Testing Framework
+### 6. Testing Framework
 - Unit tests for layout calculations
 - Regression test suite
 - Performance benchmarks
@@ -78,6 +83,8 @@ From WebKit's project goals, this demonstrates:
 - **Box model**: margin, border, padding, content
 - **Block layout**: Vertical stacking, width/height calculation
 - **Basic flexbox**: flex-direction (row/column), justify-content, align-items
+- **Text layout**: Word wrapping, line breaking, left/center/right/justify alignment
+- **Font metrics**: Configurable character width, line height, letter spacing
 - **Positioning**: Normal flow only (no absolute/fixed)
 - **Properties**: Width, height, margin, padding, display, flex properties
 - **Testing**: Comprehensive unit and integration tests
@@ -147,6 +154,12 @@ mini-layout-engine/
 │   │   ├── OutputFormatter.h     # Output formatting
 │   │   └── OutputFormatter.cpp
 │   │
+│   ├── text/
+│   │   ├── FontMetrics.h         # Font measurement system
+│   │   ├── FontMetrics.cpp
+│   │   ├── TextLayout.h          # Text line breaking & alignment
+│   │   └── TextLayout.cpp
+│   │
 │   └── main.cpp                  # CLI entry point
 │
 ├── tests/
@@ -154,7 +167,8 @@ mini-layout-engine/
 │   ├── test_layout_node.cpp
 │   ├── test_block_layout.cpp
 │   ├── test_flex_layout.cpp
-│   └── test_parser.cpp
+│   ├── test_parser.cpp
+│   └── test_text_layout.cpp
 │
 └── examples/
     ├── simple_block.txt          # Test inputs
@@ -183,9 +197,10 @@ Completing this project provides understanding of:
 2. How layout trees represent document structure
 3. How box model calculations work
 4. How flexbox algorithm determines sizes and positions
-5. How to write clean, testable C++ for complex algorithms
-6. How to balance correctness with performance
-7. How to follow specifications to implement standards
+5. How text layout and line breaking works in browsers
+6. How to write clean, testable C++ for complex algorithms
+7. How to balance correctness with performance
+8. How to follow specifications to implement standards
 
 ## Architecture Mapping to WebKit
 
@@ -195,6 +210,8 @@ Completing this project provides understanding of:
 | LayoutTree | RenderTree |
 | BlockLayout | BlockFormattingContext |
 | FlexLayout | FlexFormattingContext |
+| TextLayout | InlineFormattingContext / LineBreaker |
+| FontMetrics | FontCascade / SimpleFontData |
 | LayoutEngine | FrameView / LayoutContext |
 
 The concepts are the same; the scope is reduced.
