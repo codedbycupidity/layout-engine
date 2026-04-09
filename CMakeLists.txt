@@ -14,6 +14,8 @@ add_executable(layout_engine
     src/layout/LayoutEngine.cpp
     src/parser/LayoutParser.cpp
     src/output/OutputFormatter.cpp
+    src/text/FontMetrics.cpp
+    src/text/TextLayout.cpp
 )
 
 target_include_directories(layout_engine PRIVATE src)
@@ -37,6 +39,7 @@ add_executable(layout_tests
     tests/test_layout_engine.cpp
     tests/test_parser.cpp
     tests/test_output_formatter.cpp
+    tests/test_text_layout.cpp
     src/core/EdgeValues.cpp
     src/core/LayoutNode.cpp
     src/layout/BlockLayout.cpp
@@ -44,6 +47,8 @@ add_executable(layout_tests
     src/layout/LayoutEngine.cpp
     src/parser/LayoutParser.cpp
     src/output/OutputFormatter.cpp
+    src/text/FontMetrics.cpp
+    src/text/TextLayout.cpp
 
 )
 
