@@ -2,6 +2,8 @@
 #define OUTPUT_FORMATTER_H
 
 #include "core/LayoutNode.h"
+#include "text/TextLayout.h"
+#include "text/FontMetrics.h"
 #include <string>
 
 class OutputFormatter
@@ -9,6 +11,13 @@ class OutputFormatter
 public:
     static void printConsole(const LayoutNode &root);
     static std::string toJSON(const LayoutNode &root, bool pretty = true);
+
+    // Text layout JSON output
+    static std::string textLayoutToJSON(const TextLayoutResult &result,
+                                        float container_width,
+                                        const std::string &text,
+                                        const std::string &align,
+                                        const FontMetrics &metrics);
 
 private:
     static void printConsoleRecursive(const LayoutNode &node, int indent_level);

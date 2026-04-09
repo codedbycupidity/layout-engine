@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text Layout Visualizer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; padding: 24px; background: #f5f5f5; }
+
+        h2 { margin-bottom: 16px; }
+
+        .controls {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            align-items: end; margin-bottom: 24px;
+            background: white; padding: 16px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #555; }
+        .controls textarea { width: 300px; height: 60px; font-family: monospace; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .controls input, .controls select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 80px; }
+        .controls button {
+            padding: 8px 20px; background: #333; color: white;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
+            align-self: end;
+        }
+        .controls button:hover { background: #555; }
+
+        .how-to {
+            background: #fffbe6; padding: 12px 16px; border-radius: 8px;
+            border: 1px solid #f0e68c; margin-bottom: 24px; font-size: 13px;
+            line-height: 1.6;
+        }
+        .how-to code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+
+        .side-by-side { display: flex; gap: 32px; margin-bottom: 24px; }
+        .panel { flex: 1; }
+        .panel h3 { margin-bottom: 8px; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+
+        .container {
+            border: 2px solid #333; position: relative;
+            background: white; overflow: hidden;
+        }
+
+        .line {
+            position: absolute;
+            border-bottom: 1px dashed #ddd;
+        }
+        .line:hover { background: rgba(0, 120, 255, 0.05); }
+
+        .word {
+            position: absolute;
+            background: rgba(255, 165, 0, 0.15);
+            border: 1px solid rgba(255, 165, 0, 0.3);
+            border-radius: 2px;
+            font-family: monospace;
+            white-space: nowrap;
+            display: flex; align-items: center;
+            padding: 0 1px;
+            font-size: 12px;
+        }
+
+        .stats {
+            display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 24px;
+            background: white; padding: 12px 16px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 13px;
+        }
+        .stats span { color: #666; }
+        .stats strong { color: #333; }
+
+        .debug {
+            background: white; padding: 16px; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .debug h3 { margin-bottom: 8px; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .debug pre { font-size: 12px; color: #333; overflow-x: auto; }
+
+        .error { background: #fee; border: 1px solid #fcc; padding: 12px; border-radius: 8px; color: #c33; margin-bottom: 24px; }
+        .loaded { background: #efe; border: 1px solid #cfc; padding: 12px; border-radius: 8px; color: #363; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <h2>Text Layout Visualizer</h2>
+
+    <div class="how-to">
+        <strong>How to use:</strong> Run the C++ engine to generate JSON, then load it here.<br>
+        <code>cd build && make && ./layout_engine --text-layout "Your text here" --width 200 --align left > ../visualizer/layout_data.json</code><br>
+        Then click <strong>Load from Engine</strong>, or paste JSON directly into the text area and click <strong>Render Pasted JSON</strong>.
+    </div>
+
+    <div class="controls">
+        <button onclick="loadFromFile()">Load from Engine</button>
+        <span style="color: #999; align-self: end; font-size: 13px;">or paste JSON below:</span>
+        <label>
+            Paste JSON
+            <textarea id="json-input" placeholder='Paste layout_data.json contents here...'></textarea>
+        </label>
+        <button onclick="renderPasted()">Render Pasted JSON</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="stats" class="stats" style="display:none;"></div>
+
+    <div class="side-by-side">
+        <div class="panel">
+            <h3>Your C++ Engine Output</h3>
+            <div id="engine-output" class="container"></div>
+        </div>
+        <div class="panel">
+            <h3>Browser Native</h3>
+            <div id="browser-output" class="container"></div>
+        </div>
+    </div>
+
+    <div class="debug">
+        <h3>Raw JSON from Engine</h3>
+        <pre id="debug"></pre>
+    </div>
+
+    <script>
+
+    async function loadFromFile() {
+        try {
+            const response = await fetch('layout_data.json?t=' + Date.now());
+            if (!response.ok) {
+                showError('Could not load layout_data.json. Run your engine first:<br>' +
+                    '<code>./layout_engine --text-layout "your text" > ../visualizer/layout_data.json</code>');
+                return;
+            }
+            const data = await response.json();
+            render(data);
+        } catch (e) {
+            showError('Error loading JSON: ' + e.message);
+        }
+    }
+
+    function renderPasted() {
+        const raw = document.getElementById('json-input').value.trim();
+        if (!raw) {
+            showError('Paste JSON into the text area first.');
+            return;
+        }
+        try {
+            const data = JSON.parse(raw);
+            render(data);
+        } catch (e) {
+            showError('Invalid JSON: ' + e.message);
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById('status').innerHTML = '<div class="error">' + msg + '</div>';
+    }
+
+    function render(data) {
+        const containerWidth = data.container_width;
+        const charWidth = data.char_width || 8;
+        const lineHeight = data.line_height || 20;
+        const letterSpacing = data.letter_spacing || 0;
+        const totalHeight = data.total_height;
+        const lines = data.lines;
+
+        document.getElementById('status').innerHTML =
+            '<div class="loaded">Loaded: ' + lines.length + ' lines, ' +
+            '"' + (data.text || '').substring(0, 50) + (data.text && data.text.length > 50 ? '...' : '') +
+            '" (' + (data.align || 'left') + ')</div>';
+
+        // --- Render engine output ---
+        const engineDiv = document.getElementById('engine-output');
+        engineDiv.style.width = containerWidth + 'px';
+        engineDiv.style.height = totalHeight + 'px';
+        engineDiv.innerHTML = '';
+
+        lines.forEach(function(line) {
+            var lineDiv = document.createElement('div');
+            lineDiv.className = 'line';
+            lineDiv.style.left = '0px';
+            lineDiv.style.top = line.y_position + 'px';
+            lineDiv.style.width = containerWidth + 'px';
+            lineDiv.style.height = lineHeight + 'px';
+
+            var x = line.x_offset;
+            line.words.forEach(function(word) {
+                var span = document.createElement('span');
+                span.className = 'word';
+                span.style.left = x + 'px';
+                span.style.top = '0px';
+                span.style.height = lineHeight + 'px';
+                var ww = (word.length * charWidth) + ((word.length - 1) * letterSpacing);
+                span.style.width = ww + 'px';
+                span.textContent = word;
+                lineDiv.appendChild(span);
+                x += ww + line.word_spacing;
+            });
+
+            engineDiv.appendChild(lineDiv);
+        });
+
+        // --- Render browser native for comparison ---
+        var browserDiv = document.getElementById('browser-output');
+        browserDiv.style.width = containerWidth + 'px';
+        browserDiv.style.fontFamily = 'monospace';
+        browserDiv.style.fontSize = (charWidth * 1.6) + 'px';
+        browserDiv.style.lineHeight = lineHeight + 'px';
+        browserDiv.style.letterSpacing = letterSpacing + 'px';
+        browserDiv.style.textAlign = data.align || 'left';
+        browserDiv.style.minHeight = totalHeight + 'px';
+        browserDiv.style.padding = '0';
+        browserDiv.style.wordBreak = 'break-word';
+        browserDiv.textContent = data.text || '';
+
+        // --- Stats ---
+        var statsDiv = document.getElementById('stats');
+        statsDiv.style.display = 'flex';
+        statsDiv.innerHTML =
+            '<span>Lines: <strong>' + lines.length + '</strong></span>' +
+            '<span>Container: <strong>' + containerWidth + 'px</strong></span>' +
+            '<span>Char Width: <strong>' + charWidth + 'px</strong></span>' +
+            '<span>Line Height: <strong>' + lineHeight + 'px</strong></span>' +
+            '<span>Total Height: <strong>' + totalHeight + 'px</strong></span>' +
+            '<span>Widest Line: <strong>' + data.total_width + 'px</strong></span>' +
+            '<span>Alignment: <strong>' + (data.align || 'left') + '</strong></span>';
+
+        // --- Debug ---
+        document.getElementById('debug').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Try loading on page load
+    loadFromFile();
+    </script>
+</body>
+</html>
