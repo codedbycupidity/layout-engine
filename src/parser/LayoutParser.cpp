@@ -6,6 +6,8 @@
 #include <cctype>
 
 // parse from file
+// opens a file, reads entire contents into a string, then hands it to parseString()
+// this way the actual parsing logic only lives in one place (parseString)
 std::unique_ptr<LayoutNode> LayoutParser::parseFile(const std::string &filename)
 {
     std::ifstream file(filename);
@@ -14,7 +16,8 @@ std::unique_ptr<LayoutNode> LayoutParser::parseFile(const std::string &filename)
         throw ParseError("Could not open file: " + filename, 0);
     }
 
-    // read file into string
+    // read entire file into a stringstream buffer, then convert to string
+    // rdbuf() gives us the raw file buffer — faster than reading line by line
     std::stringstream buffer;
     buffer << file.rdbuf();
     file.close();
@@ -22,20 +25,34 @@ std::unique_ptr<LayoutNode> LayoutParser::parseFile(const std::string &filename)
     return parseString(buffer.str());
 }
 
-// parse from string
-// using a stack to track parent nodes, parse line by line
-// cases:  node start "{", node end "}", property "key: value"
-// build tree as we go"
+// parse from string — the core parsing logic
+//
+// How it works:
+//   We read the input line by line. Each line is one of three things:
+//     1. "nodeName {"  → create a new node, push it onto the stack
+//     2. "}"           → done with current node, pop the stack
+//     3. "key: value;" → set a property on the current node
+//
+// The stack tracks nesting. The top of the stack is always the
+// "current parent" — the node we're inside of right now.
+//
+// Example input:
+//   container {          ← create root, stack = [container]
+//       width: 800;      ← set width on container
+//       child {          ← create child of container, stack = [container, child]
+//           height: 100; ← set height on child
+//       }                ← pop, stack = [container]
+//   }                    ← pop, stack = [] (done)
 
 std::unique_ptr<LayoutNode> LayoutParser::parseString(const std::string &content)
 {
-    std::unique_ptr<LayoutNode> root;
-    std::stack<LayoutNode *> parent_stack;
-    LayoutNode *current_parent = nullptr;
+    std::unique_ptr<LayoutNode> root;                // the final tree we return (starts null)
+    std::stack<LayoutNode *> parent_stack;            // tracks nesting — top = current parent
+    LayoutNode *current_parent = nullptr;             // shortcut to parent_stack.top()
 
-    m_current_line = 0;
+    m_current_line = 0;                               // for error messages ("error on line 5")
 
-    // split content into lines
+    // treat the string like a file — read it line by line
     std::istringstream stream(content);
     std::string line;
 
@@ -65,29 +82,37 @@ std::unique_ptr<LayoutNode> LayoutParser::parseString(const std::string &content
                 throw ParseError("node must have an identifier", m_current_line);
             }
 
+            // create the node — unique_ptr owns it for now
             auto new_node = std::make_unique<LayoutNode>(node_id);
 
             if (!root)
             {
-                // first node becomes root
+                // very first node in the file — this becomes the root of the tree
+                // grab raw pointer before moving ownership to root
                 current_parent = new_node.get();
                 parent_stack.push(current_parent);
-                root = std::move(new_node);
+                root = std::move(new_node);    // root now owns it, new_node is empty
             }
             else
             {
+                // not the first node — this is a child of whatever node we're inside
                 if (!current_parent)
                 {
                     throw ParseError("unexpected node (no parent context)", m_current_line);
                 }
 
+                // grab raw pointer before move (can't access new_node after move)
                 LayoutNode *node_ptr = new_node.get();
+                // hand ownership to the parent — parent's m_children vector now owns it
                 current_parent->addChild(std::move(new_node));
+                // this child is now the current parent (we're inside its {})
                 parent_stack.push(node_ptr);
                 current_parent = node_ptr;
             }
         }
 
+        // Case 2: Node end — "}" means we're done with the current node
+        // pop it off the stack and go back to its parent
         else if (line.find('}') != std::string::npos)
         {
             if (parent_stack.empty())
@@ -95,8 +120,10 @@ std::unique_ptr<LayoutNode> LayoutParser::parseString(const std::string &content
                 throw ParseError("unexpected '}' no matching '{'", m_current_line);
             }
 
-            parent_stack.pop();
+            parent_stack.pop();  // remove current node from stack
 
+            // if stack still has nodes, the new top is our parent
+            // if stack is empty, we've closed the root — nothing left
             if (!parent_stack.empty())
             {
                 current_parent = parent_stack.top();
@@ -107,24 +134,29 @@ std::unique_ptr<LayoutNode> LayoutParser::parseString(const std::string &content
             }
         }
 
+        // Case 3: Property — "key: value;" sets a property on the current node
+        // e.g. "width: 800;" or "display: flex;"
         else if (line.find(':') != std::string::npos)
         {
+            // properties must be inside a node's {} block
             if (!current_parent)
             {
                 throw ParseError("property outside of node", m_current_line);
             }
 
-            // split by ":"
+            // split "width: 800;" into key="width" and value="800"
             size_t colon_pos = line.find(':');
-            std::string key = trim(line.substr(0, colon_pos));
-            std::string value = trim(line.substr(colon_pos+1));
+            std::string key = trim(line.substr(0, colon_pos));         // everything before ':'
+            std::string value = trim(line.substr(colon_pos+1));        // everything after ':'
 
-            //remove trailing semicolon if present
+            // remove trailing semicolon if present (semicolons are optional)
             if(!value.empty() && value.back() == ';'){
                 value = value.substr(0, value.length() - 1);
                 value = trim(value);
             }
 
+            // apply this property to the current node
+            // *current_parent dereferences the pointer to get a reference
             parseProperty(*current_parent, key, value);
         }
         else
@@ -143,6 +175,8 @@ std::unique_ptr<LayoutNode> LayoutParser::parseString(const std::string &content
 }
 
 // parse property and apply to node
+// takes a key-value pair like ("width", "800") and calls the right setter
+// on the node. basically a big lookup table: key → setter method
 void LayoutParser::parseProperty(LayoutNode &node, const std::string &key, const std::string &value)
 {
     if (key == "display")
@@ -219,12 +253,17 @@ void LayoutParser::parseProperty(LayoutNode &node, const std::string &key, const
     }
 }
 
-// parge edge values (margin, padding, border)
+// parse edge values (margin, padding, border)
+// follows the same CSS shorthand rules:
+//   1 value:  "10"          → all four sides = 10
+//   2 values: "10 20"       → top/bottom = 10, left/right = 20
+//   4 values: "10 20 30 40" → top=10, right=20, bottom=30, left=40
 EdgeValues LayoutParser::parseEdgeValues(const std::string &value)
 {
+    // split "10 20 30 40" into ["10", "20", "30", "40"]
     std::vector<std::string> tokens = split(value, ' ');
 
-    // remove empty tokens
+    // remove empty tokens (in case of extra spaces like "10  20")
     tokens.erase(std::remove_if(tokens.begin(), tokens.end(),
                                 [](const std::string &s)
                                 { return s.empty(); }),
@@ -232,20 +271,20 @@ EdgeValues LayoutParser::parseEdgeValues(const std::string &value)
 
     if (tokens.size() == 1)
     {
-        // all sides same
+        // "10" → all four sides get the same value
         float val = parseFloat(tokens[0]);
         return EdgeValues(val, val, val, val);
     }
     else if (tokens.size() == 2)
     {
-        // vertical horizontal
+        // "10 20" → vertical=10 (top+bottom), horizontal=20 (left+right)
         float vertical = parseFloat(tokens[0]);
         float horizontal = parseFloat(tokens[1]);
         return EdgeValues(vertical, horizontal, vertical, horizontal);
     }
     else if (tokens.size() == 4)
     {
-        // top right bottom left
+        // "10 20 30 40" → top=10, right=20, bottom=30, left=40 (clockwise)
         float top = parseFloat(tokens[0]);
         float right = parseFloat(tokens[1]);
         float bottom = parseFloat(tokens[2]);
@@ -258,11 +297,12 @@ EdgeValues LayoutParser::parseEdgeValues(const std::string &value)
     }
 }
 
+// convert a string to float — wraps std::stof with a better error message
 float LayoutParser::parseFloat(const std::string &str)
 {
     try
     {
-        return std::stof(str);
+        return std::stof(str);  // "800" → 800.0f
     }
     catch (const std::exception &)
     {
@@ -270,7 +310,8 @@ float LayoutParser::parseFloat(const std::string &str)
     }
 }
 
-// trim whitespace from string
+// trim whitespace from both ends of a string
+// "  hello world  " → "hello world"
 std::string LayoutParser::trim(const std::string &str)
 {
     size_t start = 0;
@@ -291,7 +332,8 @@ std::string LayoutParser::trim(const std::string &str)
     return str.substr(start, end - start);
 }
 
-//split string by delimiter
+// split string by delimiter character
+// "10 20 30" split by ' ' → ["10", "20", "30"]
 std::vector<std::string> LayoutParser::split(const std::string &str, char delimiter){
     std::vector<std::string> tokens;
     std::istringstream stream(str);
